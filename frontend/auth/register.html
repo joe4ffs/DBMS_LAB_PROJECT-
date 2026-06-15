@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedTrack — Create Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" onclick="toggleTheme()">
+  <span class="theme-icon" id="theme-icon">☀️</span>
+</button>
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="auth-left">
+  <div class="left-top">
+    <div class="left-logo-row">
+      <span class="left-logo">⚕️</span>
+      <span class="left-brand">MedTrack</span>
+    </div>
+    <div class="left-headline">Your health,<br>beautifully tracked.</div>
+    <div class="left-sub">Join thousands of patients and doctors using MedTrack to manage medication and monitor recovery — smarter.</div>
+  </div>
+  <div class="left-bottom">
+    <div class="left-features">
+      <div class="left-feature">
+        <span class="left-feature-icon">💊</span>
+        <span class="left-feature-text">Track every dose, never miss a medicine</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">📈</span>
+        <span class="left-feature-text">Visualize recovery progress with charts</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">⚠️</span>
+        <span class="left-feature-text">Instant drug interaction & allergy warnings</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">🔒</span>
+        <span class="left-feature-text">Secure, private, role-based access</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="auth-right">
+  <div class="auth-container">
+    <div class="auth-card">
+
+      <div class="auth-title">Create your account</div>
+      <div class="auth-subtitle">Fill in the details below to get started with MedTrack</div>
+
+      <!-- Alerts -->
+      <div class="alert alert-error" id="alert-error">
+        <span>⚠️</span><span id="alert-error-msg">Something went wrong.</span>
+      </div>
+      <div class="alert alert-success" id="alert-success">
+        <span>✅</span><span id="alert-success-msg">Account created!</span>
+      </div>
+
+      <div class="form-grid-2">
+
+        <!-- Full Name -->
+        <div class="form-group full">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="fullname" class="form-input"
+            placeholder="e.g. Dr. Sarah Johnson" autocomplete="name">
+        </div>
+
+        <!-- Email -->
+        <div class="form-group full">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="email" class="form-input"
+            placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <!-- Role -->
+        <div class="form-group full">
+          <label class="form-label">I am a...</label>
+          <div class="role-grid">
+            <div>
+              <input type="radio" name="role" id="role-doctor" value="doctor" class="role-option">
+              <label for="role-doctor" class="role-label">
+                <span class="role-icon">👨‍⚕️</span>Doctor
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-patient" value="patient" class="role-option" checked>
+              <label for="role-patient" class="role-label">
+                <span class="role-icon">🧑‍🦽</span>Patient
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-admin" value="admin" class="role-option">
+              <label for="role-admin" class="role-label">
+                <span class="role-icon">⚙️</span>Admin
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="password" class="form-input"
+              placeholder="Min. 8 characters" autocomplete="new-password"
+              oninput="checkStrength(this.value)">
+            <button class="toggle-pw" onclick="togglePw('password',this)" type="button">👁</button>
+          </div>
+          <div class="strength-wrap">
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <div class="strength-text" id="strength-text">Enter a password</div>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" id="confirm-password" class="form-input"
+              placeholder="Repeat your password" autocomplete="new-password">
+            <button class="toggle-pw" onclick="togglePw('confirm-password',this)" type="button">👁</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-submit" id="register-btn" onclick="handleRegister()">
+        <span id="register-btn-text">Create Account →</span>
+      </button>
+
+    </div>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in here</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  (function(){
+    const saved = localStorage.getItem('medtrack-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeBtn(saved);
+  })();
+  function toggleTheme(){
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('medtrack-theme', next);
+    updateThemeBtn(next);
+  }
+  function updateThemeBtn(t){
+    document.getElementById('theme-icon').textContent  = t==='dark' ? '☀️' : '🌙';
+  }
+</script>
+</body>
+</html>

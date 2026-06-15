@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedTrack — Patient Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">⚕️</span>
+    <span class="brand-name">MedTrack</span>
+  </div>
+  <nav class="sidebar-nav">
+    <p class="nav-group-label">My Health</p>
+    <a class="nav-link active" onclick="showTab('overview', this)">
+      <span class="nav-link-icon">🏠</span> Overview
+    </a>
+    <a class="nav-link" onclick="showTab('medicines', this)">
+      <span class="nav-link-icon">💊</span> My Medicines
+    </a>
+    <a class="nav-link" onclick="showTab('recovery', this)">
+      <span class="nav-link-icon">💚</span> Recovery Log
+    </a>
+    <a class="nav-link" onclick="showTab('prescriptions', this)">
+      <span class="nav-link-icon">📋</span> Prescriptions
+    </a>
+    <a class="nav-link" onclick="showTab('sideeffects', this)">
+      <span class="nav-link-icon">⚠️</span> Side Effects
+    </a>
+    <a class="nav-link" onclick="showTab('history', this)">
+      <span class="nav-link-icon">📊</span> My History
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-label">Light mode</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title" id="page-title">My Health Overview</h1>
+    </div>
+    <div class="topbar-right">
+      <div id="user-widget"></div>
+    </div>
+  </header>
+
+  <div class="content-area">
+
+    <!-- ══ TAB: OVERVIEW ══ -->
+    <div class="section active" id="tab-overview">
+
+      <div class="page-welcome">
+        <h1 id="welcome-name">Good day! 👋</h1>
+        <p id="welcome-sub">Here's your health summary for today</p>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Adherence Rate</div>
+            <div class="stat-value green" id="p-adherence">—</div>
+            <div class="stat-sub">Overall performance</div>
+          </div>
+          <div class="stat-icon-wrap green">✅</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Doses Taken</div>
+            <div class="stat-value blue" id="p-taken">—</div>
+            <div class="stat-sub">On time or late</div>
+          </div>
+          <div class="stat-icon-wrap blue">💊</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Doses Missed</div>
+            <div class="stat-value red" id="p-missed">—</div>
+            <div class="stat-sub">Not taken at all</div>
+          </div>
+          <div class="stat-icon-wrap red">❌</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Doses Late</div>
+            <div class="stat-value yellow" id="p-late">—</div>
+            <div class="stat-sub">Taken after schedule</div>
+          </div>
+          <div class="stat-icon-wrap yellow">⏰</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Today's medicines -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">💊 Today's Medicines</span>
+            <span class="pill green" id="today-count">0</span>
+          </div>
+          <div id="today-doses"><div class="empty">Loading schedule...</div></div>
+        </div>
+
+        <!-- Adherence chart -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">📈 My Adherence Trend</span></div>
+          <div class="chart-wrap"><canvas id="p-adherence-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Recovery chart -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">💚 Recovery vs Symptoms</span></div>
+        <div class="chart-wrap"><canvas id="p-recovery-chart"></canvas></div>
+      </div>
+
+    </div>
+
+    <!-- ══ TAB: MEDICINES ══ -->
+    <div class="section" id="tab-medicines">
+      <div class="card">
+        <div class="card-head"><span class="card-title">💊 All My Scheduled Medicines</span></div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medicine</th><th>Brand</th><th>Dose Time</th><th>Frequency</th><th>Type</th></tr>
+          </thead>
+          <tbody id="my-medicines"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">📅 Full Dose History</span></div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Medicine</th><th>Scheduled</th><th>Taken At</th><th>Status</th></tr>
+          </thead>
+          <tbody id="dose-history"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ TAB: RECOVERY LOG ══ -->
+    <div class="section" id="tab-recovery">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📝 Log Today's Recovery</span></div>
+
+        <div class="form-group" style="margin-bottom:1.2rem">
+          <label class="form-label">How are your symptoms today? (1 = very bad, 10 = no symptoms)</label>
+          <div class="score-row">
+            <input type="range" id="symptom-score" min="1" max="10" value="5"
+              oninput="updateScoreLabel('symptom-score','symptom-label')">
+            <span class="score-label" id="symptom-label">5</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.2rem">
+          <label class="form-label">How recovered do you feel? (1 = not at all, 10 = fully recovered)</label>
+          <div class="score-row">
+            <input type="range" id="recovery-score" min="1" max="10" value="5"
+              oninput="updateScoreLabel('recovery-score','recovery-label')">
+            <span class="score-label" id="recovery-label">5</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.2rem">
+          <label class="form-label">Notes (optional)</label>
+          <textarea id="recovery-notes" class="form-select" rows="3"
+            placeholder="How are you feeling today..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitRecoveryLog()">Save Today's Log</button>
+        <div id="recovery-log-msg" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 My Recovery History</span></div>
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Symptom Score</th><th>Recovery Score</th><th>Notes</th></tr></thead>
+          <tbody id="recovery-history"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ TAB: PRESCRIPTIONS ══ -->
+    <div class="section" id="tab-prescriptions">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 My Prescriptions</span></div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Doctor</th><th>Start Date</th><th>End Date</th><th>Notes</th><th>Status</th></tr>
+          </thead>
+          <tbody id="my-prescriptions"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ TAB: SIDE EFFECTS ══ -->
+    <div class="section" id="tab-sideeffects">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><span class="card-title">⚠️ Report a Side Effect</span></div>
+
+          <div class="form-group" style="margin-bottom:1rem">
+            <label class="form-label">Medicine</label>
+            <select id="se-medicine" class="form-select">
+              <option value="">Select medicine...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem">
+            <label class="form-label">Side Effect Description</label>
+            <input type="text" id="se-effect" class="form-select"
+              placeholder="e.g. Nausea, dizziness, rash...">
+          </div>
+          <div class="form-group" style="margin-bottom:1rem">
+            <label class="form-label">Severity</label>
+            <select id="se-severity" class="form-select">
+              <option value="low">Low — Mild discomfort</option>
+              <option value="medium">Medium — Noticeable but manageable</option>
+              <option value="high">High — Severe, needs attention</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:1.2rem">
+            <label class="form-label">Additional Notes</label>
+            <textarea id="se-notes" class="form-select" rows="3"
+              placeholder="Any extra details..."></textarea>
+          </div>
+          <button class="btn btn-primary" style="background:var(--red)"
+            onclick="submitSideEffect()">🚨 Report Side Effect</button>
+          <div id="se-msg" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title">📋 My Reported Side Effects</span></div>
+          <table class="data-table">
+            <thead><tr><th>Medicine</th><th>Effect</th><th>Severity</th><th>Date</th></tr></thead>
+            <tbody id="my-side-effects"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: HISTORY ══ -->
+    <div class="section" id="tab-history">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><span class="card-title">📊 Dose Status Breakdown</span></div>
+          <div class="chart-wrap"><canvas id="p-status-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">📅 My Appointments</span></div>
+          <table class="data-table">
+            <thead><tr><th>Doctor</th><th>Date</th><th>Symptoms</th><th>Status</th></tr></thead>
+            <tbody id="my-appointments"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/guard.js"></script>
+<script src="js/patient_portal.js"></script>
+<script>
+  // Tab switcher
+  function showTab(name, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    const titles = {
+      overview:'My Health Overview', medicines:'My Medicines',
+      recovery:'Recovery Log', prescriptions:'My Prescriptions',
+      sideeffects:'Side Effects', history:'My History'
+    };
+    document.getElementById('page-title').textContent = titles[name] || name;
+  }
+
+  // Theme
+  (function(){
+    const t = localStorage.getItem('medtrack-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    updateThemeLabel(t);
+  })();
+  function toggleTheme(){
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('medtrack-theme', next);
+    updateThemeLabel(next);
+  }
+  function updateThemeLabel(t){
+    document.getElementById('theme-icon').textContent  = t==='dark' ? '☀️' : '🌙';
+    document.getElementById('theme-label').textContent = t==='dark' ? 'Light mode' : 'Dark mode';
+  }
+</script>
+
+</body>
+</html>

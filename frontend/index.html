@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedTrack — Doctor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">⚕️</span>
+    <span class="brand-name">MedTrack</span>
+  </div>
+  <nav class="sidebar-nav">
+    <p class="nav-group-label">Overview</p>
+    <a class="nav-link active" onclick="showSection('overview',this)">
+      <span class="nav-link-icon">◈</span> Dashboard
+    </a>
+    <a class="nav-link" onclick="showSection('patients',this)">
+      <span class="nav-link-icon">👥</span> Patients
+    </a>
+    <p class="nav-group-label">Clinical</p>
+    <a class="nav-link" onclick="showSection('interactions',this)">
+      <span class="nav-link-icon">⚠️</span> Drug Interactions
+    </a>
+    <a class="nav-link" onclick="showSection('allergies',this)">
+      <span class="nav-link-icon">🛡️</span> Allergy Conflicts
+    </a>
+    <a class="nav-link" onclick="showSection('risk',this)">
+      <span class="nav-link-icon">📊</span> Risk Scores
+    </a>
+    <p class="nav-group-label">Operations</p>
+    <a class="nav-link" onclick="showSection('pharmacy',this)">
+      <span class="nav-link-icon">💊</span> Pharmacy Stock
+    </a>
+    <a class="nav-link" onclick="showSection('reports',this)">
+      <span class="nav-link-icon">📈</span> Reports
+    </a>
+    <a class="nav-link" onclick="showSection('audit',this)">
+      <span class="nav-link-icon">🗒️</span> Audit Log
+    </a>
+    <p class="nav-group-label">Portal</p>
+    <a class="nav-link" href="patient.html">
+      <span class="nav-link-icon">🏠</span> Patient Portal
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-label">Light mode</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title" id="page-title">Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="alert-pill" id="alert-pill">
+        <span class="alert-pill-dot"></span>
+        <span id="alert-count">0</span> alerts
+      </div>
+      <div id="user-widget"></div>
+    </div>
+  </header>
+
+  <div class="content-area">
+
+    <!-- ══ OVERVIEW ══ -->
+    <div class="section active" id="section-overview">
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-value blue" id="s-patients">—</div>
+            <div class="stat-sub">Registered in system</div>
+          </div>
+          <div class="stat-icon-wrap blue">👥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Active Alerts</div>
+            <div class="stat-value red" id="s-alerts">—</div>
+            <div class="stat-sub">Unresolved notifications</div>
+          </div>
+          <div class="stat-icon-wrap red">🔔</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Avg Adherence</div>
+            <div class="stat-value green" id="s-adherence">—</div>
+            <div class="stat-sub">Across all patients</div>
+          </div>
+          <div class="stat-icon-wrap green">✅</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Active Prescriptions</div>
+            <div class="stat-value yellow" id="s-rx">—</div>
+            <div class="stat-sub">Currently ongoing</div>
+          </div>
+          <div class="stat-icon-wrap yellow">📋</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Total Medicines</div>
+            <div class="stat-value purple" id="s-meds">—</div>
+            <div class="stat-sub">In medicine catalog</div>
+          </div>
+          <div class="stat-icon-wrap purple">💊</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-left">
+            <div class="stat-label">Drug Interactions</div>
+            <div class="stat-value orange" id="s-interactions">—</div>
+            <div class="stat-sub">Known combinations</div>
+          </div>
+          <div class="stat-icon-wrap orange">⚠️</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card span-1">
+          <div class="card-head">
+            <span class="card-title">🔔 Active Alerts</span>
+            <span class="pill red" id="alerts-count-badge">0</span>
+          </div>
+          <div id="alerts-list"><div class="skeleton-list"></div><div class="skeleton-list"></div><div class="skeleton-list"></div></div>
+        </div>
+
+        <div class="card span-1">
+          <div class="card-head"><span class="card-title">💊 Recent Dose Activity</span></div>
+          <table class="data-table">
+            <thead><tr><th>Patient</th><th>Medicine</th><th>Status</th></tr></thead>
+            <tbody id="recent-doses"><tr><td colspan="3"><div class="skeleton-list"></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="card span-1">
+          <div class="card-head"><span class="card-title">📊 Dose Breakdown</span></div>
+          <div class="chart-wrap"><canvas id="chart-dose-status"></canvas></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-head"><span class="card-title">📈 Adherence Trend</span></div>
+          <div class="chart-wrap"><canvas id="chart-adherence-trend"></canvas></div>
+        </div>
+
+        <div class="card span-1">
+          <div class="card-head"><span class="card-title">🏆 Top Medicines</span></div>
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Medicine</th><th>Count</th></tr></thead>
+            <tbody id="overview-top-meds"><tr><td colspan="3"><div class="skeleton-list"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PATIENTS ══ -->
+    <div class="section" id="section-patients">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">👥 All Patients</span>
+          <input class="search-box" type="text" placeholder="Search by name..." id="patient-search" oninput="searchPatients(this.value)">
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Patient</th><th>Age</th><th>Gender</th><th>Blood Group</th><th>Phone</th><th>Adherence</th><th>Risk</th></tr>
+          </thead>
+          <tbody id="patient-list"><tr><td colspan="7"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ DRUG INTERACTIONS ══ -->
+    <div class="section" id="section-interactions">
+      <div class="card">
+        <div class="card-head"><span class="card-title">⚠️ Drug Interaction Checker</span></div>
+        <p class="card-desc">⚠️ For academic demonstration only. Always consult a licensed pharmacist before prescribing.</p>
+        <div class="checker-row">
+          <div class="form-group">
+            <label class="form-label">Medicine 1</label>
+            <select id="drug1" class="form-select"><option value="">Select medicine...</option></select>
+          </div>
+          <div class="checker-vs">VS</div>
+          <div class="form-group">
+            <label class="form-label">Medicine 2</label>
+            <select id="drug2" class="form-select"><option value="">Select medicine...</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="checkInteraction()">Check</button>
+        </div>
+        <div id="interaction-result" style="margin-top:1rem"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 All Known Interactions</span></div>
+        <table class="data-table">
+          <thead><tr><th>Medicine 1</th><th>Medicine 2</th><th>Severity</th><th>Warning</th></tr></thead>
+          <tbody id="interactions-list"><tr><td colspan="4"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ ALLERGIES ══ -->
+    <div class="section" id="section-allergies">
+      <div class="card">
+        <div class="card-head"><span class="card-title">🛡️ Allergy Conflict Checker</span></div>
+        <p class="card-desc">Check if a medicine is safe to prescribe for a specific patient based on their allergy records.</p>
+        <div class="checker-row">
+          <div class="form-group">
+            <label class="form-label">Patient</label>
+            <select id="allergy-patient" class="form-select"><option value="">Select patient...</option></select>
+          </div>
+          <div class="checker-vs">+</div>
+          <div class="form-group">
+            <label class="form-label">Medicine</label>
+            <select id="allergy-medicine" class="form-select"><option value="">Select medicine...</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="checkAllergyConflict()">Check</button>
+        </div>
+        <div id="allergy-result" style="margin-top:1rem"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📋 Patient Allergy Records</span></div>
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Allergy</th><th>Noted Date</th></tr></thead>
+          <tbody id="allergy-list"><tr><td colspan="3"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ RISK ══ -->
+    <div class="section" id="section-risk">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📊 Patient Risk Classification</span></div>
+        <p class="card-desc">Patients auto-classified by adherence rate and missed dose frequency.</p>
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Adherence</th><th>Taken</th><th>Missed</th><th>Late</th><th>Risk Level</th></tr></thead>
+          <tbody id="risk-list"><tr><td colspan="6"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">💚 Recovery vs Adherence Correlation</span></div>
+        <p class="card-desc">Does taking medicine on time actually lead to faster recovery?</p>
+        <div class="chart-wrap"><canvas id="chart-correlation"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ PHARMACY ══ -->
+    <div class="section" id="section-pharmacy">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">⚠️ Low Stock Alerts</span>
+            <span class="pill red" id="low-stock-count">0</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Medicine</th><th>Stock</th><th>Expiry</th><th>Status</th></tr></thead>
+            <tbody id="low-stock-list"><tr><td colspan="4"><div class="skeleton-list"></div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">🏆 Most Prescribed Medicines</span></div>
+          <table class="data-table">
+            <thead><tr><th>Rank</th><th>Medicine</th><th>Brand</th><th>Count</th></tr></thead>
+            <tbody id="top-medicines"><tr><td colspan="4"><div class="skeleton-list"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📦 Full Pharmacy Inventory</span></div>
+        <table class="data-table">
+          <thead><tr><th>Medicine</th><th>Brand</th><th>Type</th><th>Stock</th><th>Expiry</th><th>Status</th></tr></thead>
+          <tbody id="full-inventory"><tr><td colspan="6"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ REPORTS ══ -->
+    <div class="section" id="section-reports">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📈 Rolling 7-Day Adherence</span></div>
+        <p class="card-desc">SQL Window Function — 7-day rolling average adherence per patient</p>
+        <table class="data-table">
+          <thead><tr><th>Patient</th><th>Date</th><th>Daily %</th><th>7-Day Avg</th></tr></thead>
+          <tbody id="rolling-list"><tr><td colspan="4"><div class="skeleton-list"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><span class="card-title">✅ Perfect Adherence Patients</span></div>
+          <p class="card-desc">SQL NOT EXISTS — patients who never missed a dose</p>
+          <div id="perfect-list"><div class="skeleton-list"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">📊 Disease Distribution</span></div>
+          <div class="chart-wrap"><canvas id="chart-disease"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT ══ -->
+    <div class="section" id="section-audit">
+      <div class="card">
+        <div class="card-head"><span class="card-title">🗒️ Prescription Audit Trail</span></div>
+        <p class="card-desc">Every change made to prescriptions is automatically logged here by database triggers.</p>
+        <table class="data-table">
+          <thead><tr><th>Table</th><th>Operation</th><th>Record ID</th><th>Old Value</th><th>New Value</th><th>Changed At</th></tr></thead>
+          <tbody id="audit-list"><tr><td colspan="6" class="empty">No audit records yet — changes to prescriptions will appear here automatically.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/guard.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/interactions.js"></script>
+<script src="js/pharmacy.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/risk.js"></script>
+
+<script>
+  // ── Theme
+  (function(){
+    const t = localStorage.getItem('medtrack-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    updateThemeLabel(t);
+  })();
+  function toggleTheme(){
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('medtrack-theme', next);
+    updateThemeLabel(next);
+  }
+  function updateThemeLabel(t){
+    document.getElementById('theme-icon').textContent  = t === 'dark' ? '☀️' : '🌙';
+    document.getElementById('theme-label').textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+  }
+
+  // ── Section navigation
+  function showSection(name, el){
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name)?.classList.add('active');
+    if (el) el.classList.add('active');
+    const titles = {
+      overview:'Dashboard', patients:'Patients',
+      interactions:'Drug Interactions', allergies:'Allergy Conflicts',
+      risk:'Risk Scores', pharmacy:'Pharmacy Stock',
+      reports:'Reports', audit:'Audit Log'
+    };
+    document.getElementById('page-title').textContent = titles[name] || name;
+  }
+
+  // ── Alert pill click — scroll to alerts
+  document.getElementById('alert-pill')?.addEventListener('click', () => {
+    showSection('overview', document.querySelector('.nav-link'));
+    setTimeout(() => {
+      document.getElementById('alerts-list')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 100);
+  });
+</script>
+
+</body>
+</html>

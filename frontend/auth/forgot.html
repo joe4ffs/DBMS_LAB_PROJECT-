@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedTrack — Reset Password</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">
+  <span class="theme-icon" id="theme-icon">☀️</span>
+</button>
+
+<!-- LEFT -->
+<div class="auth-left">
+  <div class="left-top">
+    <div class="left-logo-row">
+      <span class="left-logo">⚕️</span>
+      <span class="left-brand">MedTrack</span>
+    </div>
+    <div class="left-headline">Forgot your<br>password?</div>
+    <div class="left-sub">No worries — it happens to everyone. Enter your email and we'll send you a secure reset link instantly.</div>
+  </div>
+  <div class="left-bottom">
+    <div class="left-features">
+      <div class="left-feature">
+        <span class="left-feature-icon">📧</span>
+        <span class="left-feature-text">Reset link sent to your email instantly</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">🔒</span>
+        <span class="left-feature-text">End-to-end encrypted reset process</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">⚡</span>
+        <span class="left-feature-text">Back to your dashboard in minutes</span>
+      </div>
+      <div class="left-feature">
+        <span class="left-feature-icon">🛡️</span>
+        <span class="left-feature-text">Your data stays protected at all times</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="auth-right">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-title">Reset your password 🔑</div>
+      <div class="auth-subtitle">Enter your registered email and we'll send you a secure link to reset your password</div>
+
+      <div class="alert alert-error" id="alert-error">
+        <span>⚠️</span><span id="alert-error-msg">Something went wrong.</span>
+      </div>
+      <div class="alert alert-success" id="alert-success">
+        <span>✅</span><span id="alert-success-msg">Reset link sent! Check your inbox and spam folder.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-input"
+          placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <button class="btn-submit" id="reset-btn" onclick="handleReset()">
+        <span id="reset-btn-text">Send Reset Link →</span>
+      </button>
+    </div>
+
+    <div class="auth-footer">
+      Remember your password? <a href="login.html">Back to Sign In</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  (function(){
+    const saved = localStorage.getItem('medtrack-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeBtn(saved);
+  })();
+  function toggleTheme(){
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('medtrack-theme', next);
+    updateThemeBtn(next);
+  }
+  function updateThemeBtn(t){
+    document.getElementById('theme-icon').textContent  = t==='dark' ? '☀️' : '🌙';
+  }
+</script>
+</body>
+</html>
