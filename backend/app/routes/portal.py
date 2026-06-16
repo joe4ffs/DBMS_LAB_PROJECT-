@@ -1,0 +1,156 @@
+from fastapi import APIRouter
+from datetime import datetime
+from app.database import supabase
+from app.models.schemas import RecoveryLogIn, SideEffectIn
+
+router = APIRouter()
+
+
+@router.get("/adherence/{patient_id}")
+async def get_adherence(patient_id: int):
+    result = supabase.table("doselog") \
+        .select("status") \
+        .eq("patient_id", patient_id) \
+        .neq("status", "pending") \
+        .execute()
+    data   = result.data or []
+    total  = len(data)
+    taken  = sum(1 for d in data if d["status"] == "taken")
+    missed = sum(1 for d in data if d["status"] == "missed")
+    late   = sum(1 for d in data if d["status"] == "late")
+    pct    = round((taken / total) * 100) if total > 0 else 0
+    return {"total": total, "taken": taken, "missed": missed, "late": late, "pct": pct}
+
+
+@router.get("/doses/today/{patient_id}")
+async def get_today_doses(patient_id: int):
+    today  = datetime.now().strftime("%Y-%m-%d")
+    result = supabase.table("doselog") \
+        .select("log_id, status, scheduled_at, medicationschedule(dose_time, medicine(generic_name, brand_name, dosage_type))") \
+        .eq("patient_id", patient_id) \
+        .gte("scheduled_at", f"{today}T00:00:00") \
+        .lte("scheduled_at", f"{today}T23:59:59") \
+        .order("scheduled_at") \
+        .execute()
+    return result.data or []
+
+
+@router.patch("/doses/{log_id}/taken")
+async def mark_dose_taken(log_id: int):
+    supabase.table("doselog") \
+        .update({"status": "taken", "taken_at": datetime.now().isoformat()}) \
+        .eq("log_id", log_id) \
+        .execute()
+    return {"success": True}
+
+
+@router.get("/doses/history/{patient_id}")
+async def get_dose_history(patient_id: int):
+    result = supabase.table("doselog") \
+        .select("status, scheduled_at, taken_at, medicationschedule(medicine(generic_name))") \
+        .eq("patient_id", patient_id) \
+        .order("scheduled_at", desc=True) \
+        .limit(30) \
+        .execute()
+    return result.data or []
+
+
+@router.get("/doses/chart/{patient_id}")
+async def get_dose_chart(patient_id: int):
+    result = supabase.table("doselog") \
+        .select("scheduled_at, status") \
+        .eq("patient_id", patient_id) \
+        .neq("status", "pending") \
+        .order("scheduled_at") \
+        .execute()
+    return result.data or []
+
+
+@router.get("/recovery/{patient_id}")
+async def get_recovery(patient_id: int):
+    result = supabase.table("recoverylog") \
+        .select("log_date, symptom_score, recovery_score, notes") \
+        .eq("patient_id", patient_id) \
+        .order("log_date", desc=True) \
+        .execute()
+    return result.data or []
+
+
+@router.get("/recovery/chart/{patient_id}")
+async def get_recovery_chart(patient_id: int):
+    result = supabase.table("recoverylog") \
+        .select("log_date, symptom_score, recovery_score") \
+        .eq("patient_id", patient_id) \
+        .order("log_date") \
+        .execute()
+    return result.data or []
+
+
+@router.post("/recovery")
+async def submit_recovery(body: RecoveryLogIn):
+    supabase.table("recoverylog").upsert({
+        "patient_id":     body.patient_id,
+        "log_date":       body.log_date,
+        "symptom_score":  body.symptom_score,
+        "recovery_score": body.recovery_score,
+        "notes":          body.notes,
+    }, on_conflict="patient_id,log_date").execute()
+    return {"success": True}
+
+
+@router.get("/prescriptions/{patient_id}")
+async def get_prescriptions(patient_id: int):
+    appts = supabase.table("appointment") \
+        .select("appointment_id") \
+        .eq("patient_id", patient_id) \
+        .execute()
+    if not appts.data:
+        return []
+    appt_ids = [a["appointment_id"] for a in appts.data]
+    result = supabase.table("prescription") \
+        .select("start_date, end_date, notes, status, appointment(doctor(full_name))") \
+        .in_("appointment_id", appt_ids) \
+        .order("created_at", desc=True) \
+        .execute()
+    return result.data or []
+
+
+@router.get("/medicines/{patient_id}")
+async def get_patient_medicines(patient_id: int):
+    result = supabase.table("medicationschedule") \
+        .select("dose_time, frequency, medicine(generic_name, brand_name, dosage_type)") \
+        .order("dose_time") \
+        .execute()
+    return result.data or []
+
+
+@router.get("/side-effects/{patient_id}")
+async def get_side_effects(patient_id: int):
+    result = supabase.table("sideeffectreport") \
+        .select("effect_name, severity, reported_at, medicine(generic_name)") \
+        .eq("patient_id", patient_id) \
+        .order("reported_at", desc=True) \
+        .execute()
+    return result.data or []
+
+
+@router.post("/side-effects")
+async def submit_side_effect(body: SideEffectIn):
+    supabase.table("sideeffectreport").insert({
+        "patient_id":  body.patient_id,
+        "medicine_id": body.medicine_id,
+        "effect_name": body.effect_name,
+        "severity":    body.severity,
+        "notes":       body.notes,
+    }).execute()
+    return {"success": True}
+
+
+@router.get("/appointments/{patient_id}")
+async def get_appointments(patient_id: int):
+    result = supabase.table("appointment") \
+        .select("appointment_date, symptoms, status, doctor(full_name)") \
+        .eq("patient_id", patient_id) \
+        .order("appointment_date", desc=True) \
+        .execute()
+    return result.data or []

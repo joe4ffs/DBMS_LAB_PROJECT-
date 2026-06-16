@@ -27,7 +27,6 @@ function updateScoreLabel(inputId, labelId) {
 
 // ── Wait for auth then boot
 async function init() {
-  // Wait for guard.js to set CURRENT_USER
   let waited = 0;
   while (!window.CURRENT_USER && waited < 3000) {
     await new Promise(r => setTimeout(r, 100));
@@ -37,20 +36,17 @@ async function init() {
   const user = window.CURRENT_USER;
   if (!user) { window.location.replace('auth/login.html'); return; }
 
-  // Get linked patient_id from user_profiles
   const { data: profile } = await db
     .from('user_profiles')
     .select('linked_id, full_name, role')
     .eq('id', user.id)
     .single();
 
-  // Welcome message
-  const hour = new Date().getHours();
+  const hour     = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('welcome-name').textContent = `${greeting}, ${profile?.full_name ?? user.name}! 👋`;
 
   if (!profile?.linked_id) {
-    // No linked patient yet — show message
     document.getElementById('welcome-sub').textContent = 'Your account is not linked to a patient record yet. Please contact your doctor.';
     showNoPatientMessage();
     return;
@@ -59,7 +55,6 @@ async function init() {
   PATIENT_ID = profile.linked_id;
   document.getElementById('welcome-sub').textContent = "Here's your health summary for today";
 
-  // Load everything
   loadAdherenceStats();
   loadTodayDoses();
   loadAdherenceChart();
@@ -84,31 +79,17 @@ function showNoPatientMessage() {
 
 // ── Adherence stats
 async function loadAdherenceStats() {
-  const { data } = await db.from('doselog').select('status').eq('patient_id', PATIENT_ID).neq('status','pending');
-  if (!data) return;
-  const total  = data.length;
-  const taken  = data.filter(d => d.status === 'taken').length;
-  const missed = data.filter(d => d.status === 'missed').length;
-  const late   = data.filter(d => d.status === 'late').length;
-  const pct    = total > 0 ? Math.round((taken / total) * 100) : 0;
-  document.getElementById('p-adherence').textContent = pct + '%';
-  document.getElementById('p-taken').textContent     = taken;
-  document.getElementById('p-missed').textContent    = missed;
-  document.getElementById('p-late').textContent      = late;
+  const s = await api.portalAdherence(PATIENT_ID);
+  document.getElementById('p-adherence').textContent = s.pct + '%';
+  document.getElementById('p-taken').textContent     = s.taken;
+  document.getElementById('p-missed').textContent    = s.missed;
+  document.getElementById('p-late').textContent      = s.late;
 }
 
 // ── Today's doses
 async function loadTodayDoses() {
-  const today = new Date().toISOString().split('T')[0];
-  const { data } = await db
-    .from('doselog')
-    .select('log_id, status, scheduled_at, medicationschedule(dose_time, medicine(generic_name, brand_name, dosage_type))')
-    .eq('patient_id', PATIENT_ID)
-    .gte('scheduled_at', today + 'T00:00:00')
-    .lte('scheduled_at', today + 'T23:59:59')
-    .order('scheduled_at');
-
-  const el = document.getElementById('today-doses');
+  const data = await api.portalTodayDoses(PATIENT_ID);
+  const el   = document.getElementById('today-doses');
   document.getElementById('today-count').textContent = data?.length ?? 0;
 
   if (!data?.length) {
@@ -136,27 +117,20 @@ async function loadTodayDoses() {
 
 // ── Mark dose as taken
 async function markTaken(logId) {
-  const { error } = await db.from('doselog')
-    .update({ status: 'taken', taken_at: new Date().toISOString() })
-    .eq('log_id', logId);
-  if (error) { alert('Error: ' + error.message); return; }
+  await api.markDoseTaken(logId);
   loadTodayDoses();
   loadAdherenceStats();
 }
 
 // ── Adherence chart
 async function loadAdherenceChart() {
-  const { data } = await db.from('doselog')
-    .select('scheduled_at, status')
-    .eq('patient_id', PATIENT_ID)
-    .neq('status','pending')
-    .order('scheduled_at');
+  const data = await api.portalDoseChart(PATIENT_ID);
   if (!data?.length) return;
 
   const byDate = {};
   data.forEach(d => {
     const date = d.scheduled_at.split('T')[0];
-    if (!byDate[date]) byDate[date] = { taken:0, total:0 };
+    if (!byDate[date]) byDate[date] = { taken: 0, total: 0 };
     byDate[date].total++;
     if (d.status === 'taken') byDate[date].taken++;
   });
@@ -175,7 +149,7 @@ async function loadAdherenceChart() {
       plugins: { legend: { labels: { color: '#94a3b8' } } },
       scales: {
         x: { ticks: { color: '#64748b' }, grid: { color: '#1f2937' } },
-        y: { min:0, max:100, ticks: { color: '#64748b', callback: v => v+'%' }, grid: { color: '#1f2937' } }
+        y: { min: 0, max: 100, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1f2937' } }
       }
     }
   });
@@ -183,10 +157,7 @@ async function loadAdherenceChart() {
 
 // ── Recovery chart
 async function loadRecoveryChart() {
-  const { data } = await db.from('recoverylog')
-    .select('log_date, symptom_score, recovery_score')
-    .eq('patient_id', PATIENT_ID)
-    .order('log_date');
+  const data = await api.portalRecoveryChart(PATIENT_ID);
   if (!data?.length) return;
 
   new Chart(document.getElementById('p-recovery-chart'), {
@@ -203,7 +174,7 @@ async function loadRecoveryChart() {
       plugins: { legend: { labels: { color: '#94a3b8' } } },
       scales: {
         x: { ticks: { color: '#64748b' }, grid: { color: '#1f2937' } },
-        y: { min:0, max:10, ticks: { color: '#64748b' }, grid: { color: '#1f2937' } }
+        y: { min: 0, max: 10, ticks: { color: '#64748b' }, grid: { color: '#1f2937' } }
       }
     }
   });
@@ -211,16 +182,16 @@ async function loadRecoveryChart() {
 
 // ── Status doughnut chart
 async function loadStatusChart() {
-  const { data } = await db.from('doselog').select('status').eq('patient_id', PATIENT_ID).neq('status','pending');
+  const data = await api.portalDoseChart(PATIENT_ID);
   if (!data?.length) return;
-  const taken  = data.filter(d => d.status==='taken').length;
-  const missed = data.filter(d => d.status==='missed').length;
-  const late   = data.filter(d => d.status==='late').length;
+  const taken  = data.filter(d => d.status === 'taken').length;
+  const missed = data.filter(d => d.status === 'missed').length;
+  const late   = data.filter(d => d.status === 'late').length;
   new Chart(document.getElementById('p-status-chart'), {
     type: 'doughnut',
     data: {
       labels: ['Taken', 'Missed', 'Late'],
-      datasets: [{ data: [taken, missed, late], backgroundColor: ['#10b981','#ef4444','#f59e0b'], borderWidth: 0 }]
+      datasets: [{ data: [taken, missed, late], backgroundColor: ['#10b981', '#ef4444', '#f59e0b'], borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } } }
   });
@@ -228,50 +199,25 @@ async function loadStatusChart() {
 
 // ── My medicines
 async function loadMyMedicines() {
-  const { data } = await db
-    .from('medicationschedule')
-    .select('dose_time, frequency, medicine(generic_name, brand_name, dosage_type), prescription(status)')
-    .eq('prescription.patient_id', PATIENT_ID);
-
+  const data  = await api.portalMedicines(PATIENT_ID);
   const tbody = document.getElementById('my-medicines');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No medicines scheduled</td></tr>'; return; }
   tbody.innerHTML = data.map(s => `<tr>
     <td><strong>${s.medicine?.generic_name ?? '—'}</strong></td>
     <td>${s.medicine?.brand_name ?? '—'}</td>
     <td>${s.dose_time ?? '—'}</td>
-    <td><spanasync function loadMyMedicines() {
-  const { data } = await db
-    .from('medicationschedule')
-    .select('dose_time, frequency, medicine(generic_name, brand_name, dosage_type)')
-    .order('dose_time');
-
-  const tbody = document.getElementById('my-medicines');
-  if (!data?.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">No medicines scheduled</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(s => `<tr>
-    <td><strong>${s.medicine?.generic_name ?? '—'}</strong></td>
-    <td>${s.medicine?.brand_name ?? '—'}</td>
-    <td>${s.dose_time ?? '—'}</td>
-    <td><span class="badge badge-blue">${s.frequency?.replace(/_/g,' ') ?? '—'}</span></td>
+    <td><span class="badge badge-blue">${s.frequency?.replace(/_/g, ' ') ?? '—'}</span></td>
     <td><span class="badge badge-purple">${s.medicine?.dosage_type ?? '—'}</span></td>
   </tr>`).join('');
 }
 
 // ── Dose history
 async function loadDoseHistory() {
-  const { data } = await db
-    .from('doselog')
-    .select('status, scheduled_at, taken_at, medicationschedule(medicine(generic_name))')
-    .eq('patient_id', PATIENT_ID)
-    .order('scheduled_at', { ascending: false })
-    .limit(30);
-
+  const data  = await api.portalDoseHistory(PATIENT_ID);
   const tbody = document.getElementById('dose-history');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">No dose history</td></tr>'; return; }
   tbody.innerHTML = data.map(d => {
-    const badge = d.status==='taken' ? 'badge-green' : d.status==='missed' ? 'badge-red' : d.status==='late' ? 'badge-yellow' : 'badge-blue';
+    const badge = d.status === 'taken' ? 'badge-green' : d.status === 'missed' ? 'badge-red' : d.status === 'late' ? 'badge-yellow' : 'badge-blue';
     return `<tr>
       <td>${d.medicationschedule?.medicine?.generic_name ?? '—'}</td>
       <td>${new Date(d.scheduled_at).toLocaleString()}</td>
@@ -283,11 +229,7 @@ async function loadDoseHistory() {
 
 // ── Recovery history
 async function loadRecoveryHistory() {
-  const { data } = await db.from('recoverylog')
-    .select('log_date, symptom_score, recovery_score, notes')
-    .eq('patient_id', PATIENT_ID)
-    .order('log_date', { ascending: false });
-
+  const data  = await api.portalRecovery(PATIENT_ID);
   const tbody = document.getElementById('recovery-history');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">No recovery logs yet</td></tr>'; return; }
   tbody.innerHTML = data.map(r => `<tr>
@@ -306,31 +248,23 @@ async function submitRecoveryLog() {
   const today    = new Date().toISOString().split('T')[0];
   const msgEl    = document.getElementById('recovery-log-msg');
 
-  const { error } = await db.from('recoverylog').upsert({
-    patient_id: PATIENT_ID, log_date: today,
-    symptom_score: symptom, recovery_score: recovery, notes
-  }, { onConflict: 'patient_id,log_date' });
-
-  if (error) {
-    msgEl.innerHTML = `<div class="result-danger" style="padding:8px 12px;border-radius:6px">Error: ${error.message}</div>`;
-  } else {
+  try {
+    await api.submitRecovery({ patient_id: PATIENT_ID, log_date: today, symptom_score: symptom, recovery_score: recovery, notes });
     msgEl.innerHTML = `<div class="result-safe" style="padding:8px 12px;border-radius:6px">✅ Recovery log saved!</div>`;
     loadRecoveryHistory();
     setTimeout(() => msgEl.innerHTML = '', 3000);
+  } catch (e) {
+    msgEl.innerHTML = `<div class="result-danger" style="padding:8px 12px;border-radius:6px">Error: ${e.message}</div>`;
   }
 }
 
 // ── My prescriptions
 async function loadMyPrescriptions() {
-  const { data } = await db
-    .from('prescription')
-    .select('start_date, end_date, notes, status, appointment(doctor(full_name))')
-    .order('created_at', { ascending: false });
-
+  const data  = await api.portalPrescriptions(PATIENT_ID);
   const tbody = document.getElementById('my-prescriptions');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No prescriptions found</td></tr>'; return; }
   tbody.innerHTML = data.map(r => {
-    const badge = r.status==='active' ? 'badge-green' : r.status==='completed' ? 'badge-blue' : 'badge-red';
+    const badge = r.status === 'active' ? 'badge-green' : r.status === 'completed' ? 'badge-blue' : 'badge-red';
     return `<tr>
       <td>${r.appointment?.doctor?.full_name ?? '—'}</td>
       <td>${r.start_date}</td>
@@ -343,10 +277,10 @@ async function loadMyPrescriptions() {
 
 // ── Medicine dropdown for side effects
 async function loadMedicineDropdown() {
-  const { data } = await db.from('medicine').select('medicine_id, generic_name, brand_name').order('generic_name');
-  const sel = document.getElementById('se-medicine');
+  const data = await api.medicines();
+  const sel  = document.getElementById('se-medicine');
   sel.innerHTML = '<option value="">Select medicine...</option>' +
-    (data ?? []).map(m => `<option value="${m.medicine_id}">${m.generic_name} (${m.brand_name ?? '—'})</option>`).join('');
+    data.map(m => `<option value="${m.medicine_id}">${m.generic_name} (${m.brand_name ?? '—'})</option>`).join('');
 }
 
 // ── Submit side effect
@@ -362,33 +296,25 @@ async function submitSideEffect() {
     return;
   }
 
-  const { error } = await db.from('sideeffectreport').insert({
-    patient_id: PATIENT_ID, medicine_id: med,
-    effect_name: effect, severity, notes
-  });
-
-  if (error) {
-    msgEl.innerHTML = `<div class="result-danger" style="padding:8px 12px;border-radius:6px">Error: ${error.message}</div>`;
-  } else {
+  try {
+    await api.submitSideEffect({ patient_id: PATIENT_ID, medicine_id: med, effect_name: effect, severity, notes });
     msgEl.innerHTML = `<div class="result-safe" style="padding:8px 12px;border-radius:6px">✅ Side effect reported!</div>`;
     loadMySideEffects();
     document.getElementById('se-effect').value = '';
     document.getElementById('se-notes').value  = '';
     setTimeout(() => msgEl.innerHTML = '', 3000);
+  } catch (e) {
+    msgEl.innerHTML = `<div class="result-danger" style="padding:8px 12px;border-radius:6px">Error: ${e.message}</div>`;
   }
 }
 
 // ── My side effects
 async function loadMySideEffects() {
-  const { data } = await db.from('sideeffectreport')
-    .select('effect_name, severity, reported_at, medicine(generic_name)')
-    .eq('patient_id', PATIENT_ID)
-    .order('reported_at', { ascending: false });
-
+  const data  = await api.portalSideEffects(PATIENT_ID);
   const tbody = document.getElementById('my-side-effects');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">No side effects reported</td></tr>'; return; }
   tbody.innerHTML = data.map(s => {
-    const badge = s.severity==='high' ? 'badge-red' : s.severity==='medium' ? 'badge-yellow' : 'badge-green';
+    const badge = s.severity === 'high' ? 'badge-red' : s.severity === 'medium' ? 'badge-yellow' : 'badge-green';
     return `<tr>
       <td>${s.medicine?.generic_name ?? '—'}</td>
       <td>${s.effect_name}</td>
@@ -400,15 +326,11 @@ async function loadMySideEffects() {
 
 // ── My appointments
 async function loadMyAppointments() {
-  const { data } = await db.from('appointment')
-    .select('appointment_date, symptoms, status, doctor(full_name)')
-    .eq('patient_id', PATIENT_ID)
-    .order('appointment_date', { ascending: false });
-
+  const data  = await api.portalAppointments(PATIENT_ID);
   const tbody = document.getElementById('my-appointments');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">No appointments found</td></tr>'; return; }
   tbody.innerHTML = data.map(a => {
-    const badge = a.status==='completed' ? 'badge-green' : a.status==='scheduled' ? 'badge-blue' : 'badge-red';
+    const badge = a.status === 'completed' ? 'badge-green' : a.status === 'scheduled' ? 'badge-blue' : 'badge-red';
     return `<tr>
       <td>${a.doctor?.full_name ?? '—'}</td>
       <td>${new Date(a.appointment_date).toLocaleDateString()}</td>
