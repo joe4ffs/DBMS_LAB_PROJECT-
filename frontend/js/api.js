@@ -5,9 +5,7 @@
 //  directly via supabase.js / auth.js.
 // ============================================================
 
-// Change this to your deployed backend URL after deploying the backend to Vercel
-// e.g. 'https://medtrack-api.vercel.app'
-const API_BASE = 'https://dbms-lab-project-a3uo.onrender.com';
+const API_BASE = CONFIG.API_BASE;
 
 async function apiFetch(path, options = {}) {
   const { data: { session } } = await db.auth.getSession();
