@@ -663,3 +663,71 @@ textarea.form-select { resize: none; line-height: 1.5; }
   .sidebar { transform: translateX(-100%); }
   .main { margin-left: 0; }
 }
+/* ===== MOBILE FIX FOR PATIENT PORTAL ===== */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 800px) {
+  body {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .topbar {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .content-area {
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem;
+    overflow-x: hidden;
+  }
+
+  .page-welcome h1 {
+    font-size: 1.25rem;
+  }
+
+  .stat-row,
+  .stat-row.four-col {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .two-col,
+  .dash-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card,
+  .stat-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chart-wrap {
+    height: 230px;
+  }
+
+  .data-table {
+    min-width: 600px;
+  }
+
+  .card:has(.data-table) {
+    overflow-x: auto;
+  }
+}
