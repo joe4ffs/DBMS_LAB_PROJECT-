@@ -15,13 +15,15 @@ function _qs(params) {
 
 async function apiFetch(path, options = {}) {
   const { data: { session } } = await db.auth.getSession();
-  const token = session?.access_token;
+  const token      = session?.access_token;
+  const activeRole = sessionStorage.getItem('medtrack-active-role');
 
   const res = await fetch(API_BASE + path, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(activeRole ? { 'X-Role': activeRole } : {}),
       ...(options.headers || {}),
     },
   });
@@ -71,6 +73,9 @@ const api = {
 
   // ── Account
   me:                   ()     => apiFetch('/api/account/me'),
+  myRoles:              ()     => apiFetch('/api/account/roles'),
+  addPatientRole:       (body) => apiFetch('/api/account/add-patient-role', { method: 'POST', body: JSON.stringify(body) }),
+  addDoctorRole:        (body) => apiFetch('/api/account/add-doctor-role',  { method: 'POST', body: JSON.stringify(body) }),
   registerPatientRecord:(body) => apiFetch('/api/account/register-patient', { method: 'POST', body: JSON.stringify(body) }),
   registerDoctorRecord: (body) => apiFetch('/api/account/register-doctor',  { method: 'POST', body: JSON.stringify(body) }),
 

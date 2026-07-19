@@ -79,8 +79,9 @@ function isValidEmail(email) {
 
 // ── LOGIN
 async function handleLogin() {
-  const email    = document.getElementById('email')?.value.trim();
-  const password = document.getElementById('password')?.value;
+  const email      = document.getElementById('email')?.value.trim();
+  const password   = document.getElementById('password')?.value;
+  const wantedRole = document.querySelector('input[name="login-role"]:checked')?.value ?? 'patient';
 
   // Validate
   if (!email || !password) { showAlert('error', 'Please fill in all fields.'); return; }
@@ -89,34 +90,55 @@ async function handleLogin() {
 
   setLoading('login-btn', 'login-btn-text', true, 'Sign In');
 
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-  setLoading('login-btn', 'login-btn-text', false, 'Sign In');
+  const { error } = await db.auth.signInWithPassword({ email, password });
 
   if (error) {
+    setLoading('login-btn', 'login-btn-text', false, 'Sign In');
     showAlert('error', error.message === 'Invalid login credentials'
       ? 'Incorrect email or password. Please try again.'
       : errMsg(error));
     return;
   }
 
-  // Get user role and redirect accordingly
-  const { data: profile } = await db
-    .from('user_profiles')
-    .select('role')
-    .eq('id', data.user.id)
-    .single();
+  // One login can hold multiple roles (e.g. both patient and doctor), but
+  // signing in as a specific role must only succeed if the account actually
+  // HAS that role — never silently fall back to a different one just
+  // because it's the only role present (that would let a patient-only
+  // account "log in as doctor" by picking the wrong toggle).
+  let roles;
+  try {
+    roles = await api.myRoles();
+  } catch {
+    roles = [];
+  }
 
+  setLoading('login-btn', 'login-btn-text', false, 'Sign In');
+
+  const match = roles.find(r => r.role === wantedRole);
+  // The toggle only offers patient/doctor. A role outside that set (i.e.
+  // admin) has no toggle option to match, so it's the one legitimate
+  // single-role fallback.
+  const nonToggleRole = roles.length === 1 && !['patient', 'doctor'].includes(roles[0].role) ? roles[0] : null;
+
+  let activeRole;
+  if (match) {
+    activeRole = match.role;
+  } else if (nonToggleRole) {
+    activeRole = nonToggleRole.role;
+  } else {
+    await db.auth.signOut();
+    showAlert('error', roles.length === 0
+      ? 'No profile found for this account. Please contact support.'
+      : `This account has no ${wantedRole} identity. Sign in as the role you registered with, then use "Add ${wantedRole === 'doctor' ? 'Doctor' : 'Patient'} Identity" from the account menu to add it.`);
+    return;
+  }
+
+  sessionStorage.setItem('medtrack-active-role', activeRole);
   showAlert('success', 'Login successful! Redirecting...');
 
   setTimeout(() => {
-    const role = profile?.role ?? 'patient';
-    if (role === 'patient') {
-      window.location.href = '../patient.html';
-    } else {
-      window.location.href = '../index.html';
-    }
-  }, 1000);
+    window.location.href = activeRole === 'patient' ? '../patient.html' : '../index.html';
+  }, 800);
 }
 
 // ── Show/hide role-specific fields on the register form
@@ -195,7 +217,10 @@ async function handleRegister() {
 
   if (error) {
     setLoading('register-btn', 'register-btn-text', false, 'Create Account');
-    showAlert('error', errMsg(error));
+    const alreadyRegistered = /already registered|already exists|user_already_exists/i.test(error.message || '');
+    showAlert('error', alreadyRegistered
+      ? `An account with this email already exists. Sign in instead, and — if you need a ${role} identity too — use "Add ${role === 'doctor' ? 'Doctor' : 'Patient'} Identity" from the account menu after logging in.`
+      : errMsg(error));
     return;
   }
 

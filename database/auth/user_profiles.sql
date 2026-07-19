@@ -1,15 +1,24 @@
 -- ============================================================
 --  MedTrack | database/auth/user_profiles.sql
 --  Run this in Supabase SQL Editor (safe to re-run multiple times)
+--
+--  One auth.users row (one email/login) may hold MULTIPLE roles —
+--  e.g. the same person can be both a patient and a doctor. The
+--  primary key is (id, role), not just id, so a login can have up
+--  to one row per role. The frontend picks which role is "active"
+--  for a session and sends it as the X-Role header; the backend
+--  (see backend/app/auth.py) uses that to disambiguate.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS user_profiles (
-    id           UUID         PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id           UUID         NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name    VARCHAR(100) NOT NULL,
     role         VARCHAR(10)  NOT NULL DEFAULT 'patient'
                               CHECK (role IN ('admin','doctor','patient')),
     linked_id    INT,
-    created_at   TIMESTAMP    DEFAULT NOW()
+    created_at   TIMESTAMP    DEFAULT NOW(),
+
+    PRIMARY KEY (id, role)
 );
 
 -- ── RLS
@@ -37,7 +46,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'New User'),
     COALESCE(NEW.raw_user_meta_data->>'role', 'patient')
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id, role) DO NOTHING;
   RETURN NEW;
 END;
 $$;

@@ -58,7 +58,17 @@ def _decode_token(token: str) -> Optional[dict]:
     return None
 
 
-async def get_current_user(authorization: str = Header(default=None)) -> CurrentUser:
+async def get_current_user(
+    authorization: str = Header(default=None),
+    x_role: Optional[str] = Header(default=None, alias="X-Role"),
+) -> CurrentUser:
+    """
+    One login (one auth.users row) may hold multiple roles — e.g. the same
+    person can be both a patient and a doctor, each with their own
+    user_profiles row (PK is (id, role), see database/auth/user_profiles.sql).
+    The frontend tracks which role is "active" for the current session and
+    sends it as X-Role; if an account only has one role, X-Role is optional.
+    """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
 
@@ -72,21 +82,45 @@ async def get_current_user(authorization: str = Header(default=None)) -> Current
     if not user_id:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token payload")
 
-    profile = supabase.table("user_profiles") \
-        .select("id, role, linked_id, full_name") \
-        .eq("id", user_id) \
-        .single() \
-        .execute()
+    query = supabase.table("user_profiles").select("id, role, linked_id, full_name").eq("id", user_id)
+    if x_role:
+        query = query.eq("role", x_role)
+    profiles = query.execute().data or []
 
-    if not profile.data:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "No profile for this account")
+    if not profiles:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "No profile for this account/role")
+    if len(profiles) > 1:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Account has multiple roles — X-Role header required")
 
+    profile = profiles[0]
     return CurrentUser(
         user_id=user_id,
-        role=profile.data["role"],
-        linked_id=profile.data.get("linked_id"),
-        full_name=profile.data.get("full_name") or "",
+        role=profile["role"],
+        linked_id=profile.get("linked_id"),
+        full_name=profile.get("full_name") or "",
     )
+
+
+async def decode_bearer_token(authorization: str = Header(default=None)) -> str:
+    """
+    Resolves just the Supabase auth user_id (sub) from the JWT, without
+    requiring a matching user_profiles row. Used by endpoints that manage
+    roles themselves (listing roles, adding a new role to an account) where
+    get_current_user's "must already have a profile for this role" check
+    would be circular.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
+
+    token = authorization.removeprefix("Bearer ").strip()
+    payload = _decode_token(token)
+    if payload is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token payload")
+    return user_id
 
 
 def require_role(*roles: str):
