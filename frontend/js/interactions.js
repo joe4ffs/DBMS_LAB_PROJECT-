@@ -18,17 +18,36 @@ async function loadMedicineDropdowns() {
   if (am) am.innerHTML = opts;
 }
 
-// ── Load patient dropdown for allergy checker
+// ── Load patient dropdown for allergy checker (any patient with an appointment —
+//    this endpoint isn't access-gated, it's just a pre-prescribing safety check)
 async function loadAllergyPatientDropdown() {
   const data = await api.patients();
-  const opts = `<option value="">Select patient...</option>` +
-    data.map(p => `<option value="${p.patient_id}">${p.full_name}</option>`).join('');
-
   const sel = document.getElementById('allergy-patient');
-  if (sel) sel.innerHTML = opts;
+  if (sel) sel.innerHTML = `<option value="">Select patient...</option>` +
+    data.map(p => `<option value="${p.patient_id}">${p.full_name}</option>`).join('');
+}
 
+// ── Load patient dropdown for "Add Allergy to Patient" — must be scoped to
+//    patients the doctor currently has GRANTED record access to, since the
+//    backend rejects writes to a patient's clinical record otherwise.
+async function loadGrantedPatientDropdown() {
   const newSel = document.getElementById('new-allergy-patient');
-  if (newSel) newSel.innerHTML = opts;
+  if (!newSel) return;
+
+  if (window.CURRENT_USER?.role === 'admin') {
+    const data = await api.patients();
+    newSel.innerHTML = `<option value="">Select patient...</option>` +
+      data.map(p => `<option value="${p.patient_id}">${p.full_name}</option>`).join('');
+    return;
+  }
+
+  const data = await api.getGrantedPatients();
+  if (!data?.length) {
+    newSel.innerHTML = `<option value="">No patients have granted you access yet</option>`;
+    return;
+  }
+  newSel.innerHTML = `<option value="">Select patient...</option>` +
+    data.map(g => `<option value="${g.patient.patient_id}">${g.patient.full_name}</option>`).join('');
 }
 
 // ── Load allergy catalog dropdown (for attaching an existing allergy)
@@ -226,7 +245,9 @@ async function addAllergyToPatient() {
     await loadAllergyCatalogDropdown();
     await loadAllergyList();
   } catch (ex) {
-    err.textContent = ex.message || 'Failed to add allergy.';
+    err.textContent = ex.message?.includes('403')
+      ? "You no longer have access to this patient's record — access may have been revoked."
+      : (ex.message || 'Failed to add allergy.');
   }
 }
 
@@ -240,6 +261,7 @@ async function removeAllergyFromPatient(patientId, allergyId) {
 // ── Init
 loadMedicineDropdowns();
 loadAllergyPatientDropdown();
+loadGrantedPatientDropdown();
 loadAllergyCatalogDropdown();
 loadAllInteractions();
 loadAllergyList();

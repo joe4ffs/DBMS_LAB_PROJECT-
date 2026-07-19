@@ -34,6 +34,7 @@ function closePatientModal() {
 // keep it in sync whenever the patient list changes here.
 function refreshPatientDropdowns() {
   if (typeof loadAllergyPatientDropdown === 'function') loadAllergyPatientDropdown();
+  if (typeof loadGrantedPatientDropdown  === 'function') loadGrantedPatientDropdown();
 }
 
 async function deletePatientRow(patientId) {
