@@ -223,7 +223,7 @@ async function submitPrescription() {
     if (pid) await loadRxPrescriptionsForPatient(pid);
 
     err.textContent = '';
-    err.style.color = 'var(--green, #10b981)';
+    err.style.color = 'var(--green, #8b7fd6)';
     err.textContent = 'Prescription created successfully.';
   } catch (ex) {
     err.style.color = '';

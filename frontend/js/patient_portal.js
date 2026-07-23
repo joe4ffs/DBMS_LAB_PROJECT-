@@ -145,8 +145,8 @@ async function loadAdherenceChart() {
     type: 'line',
     data: {
       labels,
-      datasets: [{ label: 'Adherence %', data: values, borderColor: '#3fa987',
-        backgroundColor: 'rgba(63,169,135,0.12)', tension: 0.4, fill: true, pointRadius: 4 }]
+      datasets: [{ label: 'Adherence %', data: values, borderColor: '#8b7fd6',
+        backgroundColor: 'rgba(139,127,214,0.12)', tension: 0.4, fill: true, pointRadius: 4 }]
     },
     options: {
       responsive: true,
@@ -195,7 +195,7 @@ async function loadStatusChart() {
     type: 'doughnut',
     data: {
       labels: ['Taken', 'Missed', 'Late'],
-      datasets: [{ data: [taken, missed, late], backgroundColor: ['#3fa987', '#e1637a', '#c99435'], borderWidth: 0 }]
+      datasets: [{ data: [taken, missed, late], backgroundColor: ['#8b7fd6', '#e1637a', '#c99435'], borderWidth: 0 }]
     },
     options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } } }
   });

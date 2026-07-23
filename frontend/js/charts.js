@@ -28,10 +28,10 @@ async function loadAdherenceChart(patientId) {
       datasets: [{
         label: 'Adherence %',
         data: values,
-        borderColor: '#3fa987',
-        backgroundColor: 'rgba(63,169,135,0.12)',
+        borderColor: '#8b7fd6',
+        backgroundColor: 'rgba(139,127,214,0.12)',
         tension: 0.4, fill: true,
-        pointBackgroundColor: '#3fa987', pointRadius: 4,
+        pointBackgroundColor: '#8b7fd6', pointRadius: 4,
       }]
     },
     options: {
@@ -97,7 +97,7 @@ async function loadDoseStatusChart(patientId) {
     type: 'doughnut',
     data: {
       labels: ['Taken', 'Missed', 'Late'],
-      datasets: [{ data: [taken, missed, late], backgroundColor: ['#3fa987', '#e1637a', '#c99435'], borderWidth: 0 }]
+      datasets: [{ data: [taken, missed, late], backgroundColor: ['#8b7fd6', '#e1637a', '#c99435'], borderWidth: 0 }]
     },
     options: {
       responsive: true,

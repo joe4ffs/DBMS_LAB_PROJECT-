@@ -33,7 +33,7 @@ function checkStrength(pw) {
     { pct: '25%',  color: '#ef4444',     label: 'Weak' },
     { pct: '50%',  color: '#f59e0b',     label: 'Fair' },
     { pct: '75%',  color: '#3b82f6',     label: 'Good' },
-    { pct: '100%', color: '#10b981',     label: 'Strong' },
+    { pct: '100%', color: '#8b7fd6',     label: 'Strong' },
   ];
   const lvl = levels[score];
   fill.style.width      = lvl.pct;

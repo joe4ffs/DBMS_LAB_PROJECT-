@@ -211,7 +211,7 @@ async function submitAddRole(role) {
 function renderUserWidget(name, role, initials, roles) {
   const el = document.getElementById('user-widget');
   if (!el) return;
-  const roleColor = role === 'doctor' ? '#3b82f6' : role === 'admin' ? '#8b5cf6' : '#10b981';
+  const roleColor = role === 'doctor' ? '#3b82f6' : role === 'admin' ? '#8b5cf6' : '#8b7fd6';
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
 
   const hasPatient = roles.some(r => r.role === 'patient');

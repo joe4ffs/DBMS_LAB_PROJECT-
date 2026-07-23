@@ -95,7 +95,7 @@ async function loadDiseaseChart() {
       labels: data.map(d => d.disease_name),
       datasets: [{
         data: data.map(d => d.count),
-        backgroundColor: ['#5c8de8', '#3fa987', '#c99435', '#e1637a', '#9b7fd4', '#d98249', '#6e62e5', '#4fb8c7'],
+        backgroundColor: ['#5c8de8', '#c97ba0', '#c99435', '#e1637a', '#9b7fd4', '#d98249', '#6e62e5', '#4fb8c7'],
         borderWidth: 0,
       }]
     },

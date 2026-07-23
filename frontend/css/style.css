@@ -22,12 +22,12 @@
   --sidebar-bg: #ffffff;
   --topbar-bg:  #ffffff;
 
-  --primary:    #0d9488;
-  --primary-bg: rgba(13,148,136,.10);
+  --primary:    #8b7fd6;
+  --primary-bg: rgba(139,127,214,.10);
   --blue:       #2563eb;
   --blue-bg:    rgba(37,99,235,.10);
-  --green:      #16a34a;
-  --green-bg:   rgba(22,163,74,.10);
+  --green:      #8b7fd6;
+  --green-bg:   rgba(139,127,214,.10);
   --red:        #dc2626;
   --red-bg:     rgba(220,38,38,.10);
   --yellow:     #d97706;
@@ -60,12 +60,12 @@
   --sidebar-bg: #1a2540;
   --topbar-bg:  #1a2540;
 
-  --primary:    #14b8a6;
-  --primary-bg: rgba(20,184,166,.16);
+  --primary:    #a79be8;
+  --primary-bg: rgba(167,155,232,.16);
   --blue:       #60a5fa;
   --blue-bg:    rgba(96,165,250,.16);
-  --green:      #4ade80;
-  --green-bg:   rgba(74,222,128,.16);
+  --green:      #a79be8;
+  --green-bg:   rgba(167,155,232,.16);
   --red:        #f87171;
   --red-bg:     rgba(248,113,113,.16);
   --yellow:     #fbbf24;

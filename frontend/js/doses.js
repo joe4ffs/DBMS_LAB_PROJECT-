@@ -44,6 +44,6 @@ async function loadAdherenceStats(patientId) {
   document.getElementById('adh-late').textContent   = s.late;
 
   const fill = document.getElementById('adh-fill');
-  const color = s.pct >= 80 ? '#10b981' : s.pct >= 60 ? '#f59e0b' : '#ef4444';
+  const color = s.pct >= 80 ? '#8b7fd6' : s.pct >= 60 ? '#f59e0b' : '#ef4444';
   if (fill) { fill.style.width = s.pct + '%'; fill.style.background = color; }
 }

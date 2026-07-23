@@ -17,16 +17,16 @@
   --text2:        #334155;
   --muted:        #64748b;
   --muted2:       #94a3b8;
-  --accent:       #0d9488;
-  --accent-hover: #0b8177;
-  --accent-bg:    rgba(13,148,136,.10);
-  --green:        #16a34a;
-  --green-bg:     rgba(22,163,74,.10);
+  --accent:       #8b7fd6;
+  --accent-hover: #7a6cc7;
+  --accent-bg:    rgba(139,127,214,.10);
+  --green:        #8b7fd6;
+  --green-bg:     rgba(139,127,214,.10);
   --red:          #dc2626;
   --red-bg:       rgba(220,38,38,.10);
   --glass-bg:     rgba(255,255,255,.62);
   --glass-border: rgba(255,255,255,.6);
-  --blob-1:       rgba(13,148,136,.35);
+  --blob-1:       rgba(139,127,214,.35);
   --blob-2:       rgba(37,99,235,.28);
   --blob-3:       rgba(139,92,246,.24);
   --shadow:       0 2px 10px rgba(15,23,42,.05);
@@ -45,16 +45,16 @@
   --text2:        #cbd5e1;
   --muted:        #94a3b8;
   --muted2:       #64748b;
-  --accent:       #14b8a6;
-  --accent-hover: #2dd4bf;
-  --accent-bg:    rgba(20,184,166,.16);
-  --green:        #4ade80;
-  --green-bg:     rgba(74,222,128,.16);
+  --accent:       #a79be8;
+  --accent-hover: #b8aef0;
+  --accent-bg:    rgba(167,155,232,.16);
+  --green:        #a79be8;
+  --green-bg:     rgba(167,155,232,.16);
   --red:          #f87171;
   --red-bg:       rgba(248,113,113,.16);
   --glass-bg:     rgba(30,41,59,.55);
   --glass-border: rgba(255,255,255,.08);
-  --blob-1:       rgba(20,184,166,.28);
+  --blob-1:       rgba(167,155,232,.28);
   --blob-2:       rgba(96,165,250,.22);
   --blob-3:       rgba(167,139,250,.2);
   --shadow:       0 2px 10px rgba(0,0,0,.3);
@@ -352,7 +352,7 @@ textarea.form-input { resize: none; line-height: 1.5; }
 .alert.show { display: flex; animation: fadeSlideIn .25s var(--ease); }
 .alert .icon { width: 17px; height: 17px; flex-shrink: 0; }
 .alert-error   { background: var(--red-bg);   border: 1px solid rgba(225,99,122,.3);  color: var(--red);   }
-.alert-success { background: var(--green-bg); border: 1px solid rgba(63,169,135,.3); color: var(--green); }
+.alert-success { background: var(--green-bg); border: 1px solid rgba(139,127,214,.3); color: var(--green); }
 
 /* ── DIVIDER ── */
 .divider { display: flex; align-items: center; gap: 12px; margin: 1.4rem 0; color: var(--muted2); font-size: 12px; }
