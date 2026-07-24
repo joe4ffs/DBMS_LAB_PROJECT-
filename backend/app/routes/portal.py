@@ -137,7 +137,12 @@ async def get_prescriptions(patient_id: int):
         return []
     appt_ids = [a["appointment_id"] for a in appts.data]
     result = supabase.table("prescription") \
-        .select("start_date, end_date, notes, status, appointment(doctor(full_name))") \
+        .select(
+            "prescription_id, start_date, end_date, notes, status, "
+            "appointment(doctor(full_name)), "
+            "prescriptionmedicine(dosage, duration_days, instructions, "
+            "medicine(generic_name, brand_name, dosage_type, manufacturer, description))"
+        ) \
         .in_("appointment_id", appt_ids) \
         .order("created_at", desc=True) \
         .execute()

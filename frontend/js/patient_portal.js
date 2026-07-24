@@ -264,20 +264,88 @@ async function submitRecoveryLog() {
 }
 
 // ── My prescriptions
+let PRESCRIPTIONS_DATA = [];
+
 async function loadMyPrescriptions() {
   const data  = await api.portalPrescriptions(PATIENT_ID);
+  PRESCRIPTIONS_DATA = data || [];
   const tbody = document.getElementById('my-prescriptions');
-  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No prescriptions found</td></tr>'; return; }
-  tbody.innerHTML = data.map(r => {
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No prescriptions found</td></tr>'; return; }
+  tbody.innerHTML = data.map((r, idx) => {
     const badge = r.status === 'active' ? 'badge-green' : r.status === 'completed' ? 'badge-blue' : 'badge-red';
+    const meds = (r.prescriptionmedicine || []).map(pm => `
+      <div style="margin-bottom:6px">
+        <strong>${pm.medicine?.generic_name ?? '—'}</strong> ${pm.medicine?.brand_name ? `(${pm.medicine.brand_name})` : ''}
+        <div style="font-size:12px;color:var(--text2)">
+          ${pm.medicine?.dosage_type ?? '—'}${pm.medicine?.manufacturer ? ` · ${pm.medicine.manufacturer}` : ''}<br>
+          ${pm.dosage}, ${pm.duration_days} day(s)${pm.instructions ? ` — ${pm.instructions}` : ''}
+        </div>
+      </div>`).join('') || '—';
     return `<tr>
       <td>${r.appointment?.doctor?.full_name ?? '—'}</td>
       <td>${r.start_date}</td>
       <td>${r.end_date}</td>
       <td>${r.notes ?? '—'}</td>
+      <td>${meds}</td>
       <td><span class="badge ${badge}">${r.status}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="downloadPrescriptionPDF(${idx})"><i class="icon" data-lucide="file-down"></i>PDF</button></td>
     </tr>`;
   }).join('');
+  if (window.lucide) lucide.createIcons();
+}
+
+// ── Download a prescription as PDF
+function downloadPrescriptionPDF(idx) {
+  const rx = PRESCRIPTIONS_DATA[idx];
+  if (!rx) return;
+
+  const medsRows = (rx.prescriptionmedicine || []).map(pm => `
+    <tr>
+      <td>${pm.medicine?.generic_name ?? '—'}</td>
+      <td>${pm.medicine?.brand_name ?? '—'}</td>
+      <td>${pm.medicine?.dosage_type ?? '—'}</td>
+      <td>${pm.medicine?.manufacturer ?? '—'}</td>
+      <td>${pm.dosage}</td>
+      <td>${pm.duration_days}</td>
+      <td>${pm.instructions ?? '—'}</td>
+    </tr>`).join('');
+
+  const container = document.createElement('div');
+  container.style.padding = '24px';
+  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+  container.style.color = '#111';
+  container.innerHTML = `
+    <h2 style="margin:0 0 4px">MedTrack — Prescription</h2>
+    <p style="margin:0 0 16px;color:#555">Prescription #${rx.prescription_id}</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px">
+      <tr><td style="padding:4px 8px;font-weight:bold">Doctor</td><td style="padding:4px 8px">${rx.appointment?.doctor?.full_name ?? '—'}</td></tr>
+      <tr><td style="padding:4px 8px;font-weight:bold">Start Date</td><td style="padding:4px 8px">${rx.start_date}</td></tr>
+      <tr><td style="padding:4px 8px;font-weight:bold">End Date</td><td style="padding:4px 8px">${rx.end_date}</td></tr>
+      <tr><td style="padding:4px 8px;font-weight:bold">Notes</td><td style="padding:4px 8px">${rx.notes ?? '—'}</td></tr>
+      <tr><td style="padding:4px 8px;font-weight:bold">Status</td><td style="padding:4px 8px">${rx.status}</td></tr>
+    </table>
+    <h3 style="margin:0 0 8px">Medicines</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:#eee">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Generic Name</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Brand Name</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Dosage Type</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Manufacturer</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Dosage</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Duration (days)</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #ccc">Instructions</th>
+        </tr>
+      </thead>
+      <tbody>${medsRows || '<tr><td colspan="7" style="padding:6px 8px;border:1px solid #ccc">No medicines listed</td></tr>'}</tbody>
+    </table>
+  `;
+
+  html2pdf().set({
+    filename: `prescription_${rx.prescription_id}.pdf`,
+    margin: 10,
+    html2canvas: { scale: 2 },
+  }).from(container).save();
 }
 
 // ── Medicine dropdown for side effects
