@@ -81,7 +81,7 @@
         <!-- Role -->
         <div class="form-group full">
           <label class="form-label">I am a...</label>
-          <div class="role-grid">
+          <div class="role-grid" style="grid-template-columns:1fr 1fr">
             <div>
               <input type="radio" name="role" id="role-doctor" value="doctor" class="role-option" onchange="onRoleChange()">
               <label for="role-doctor" class="role-label">
@@ -92,12 +92,6 @@
               <input type="radio" name="role" id="role-patient" value="patient" class="role-option" checked onchange="onRoleChange()">
               <label for="role-patient" class="role-label">
                 <i class="role-icon icon" data-lucide="user"></i>Patient
-              </label>
-            </div>
-            <div>
-              <input type="radio" name="role" id="role-admin" value="admin" class="role-option" onchange="onRoleChange()">
-              <label for="role-admin" class="role-label">
-                <i class="role-icon icon" data-lucide="settings"></i>Admin
               </label>
             </div>
           </div>
@@ -140,8 +134,33 @@
 
         <!-- Doctor-only fields -->
         <div class="form-group full" id="field-specialization">
-          <label class="form-label">Specialization</label>
-          <input type="text" id="specialization" class="form-input" placeholder="e.g. Cardiologist">
+          <label class="form-label" for="specialization">Specialization</label>
+          <div class="select-wrap">
+            <select id="specialization" class="form-input" required aria-label="Specialization" onchange="onSpecializationChange()">
+              <option value="" disabled selected>Select specialization</option>
+              <option value="Cardiologist">Cardiologist</option>
+              <option value="Dermatologist">Dermatologist</option>
+              <option value="Endocrinologist">Endocrinologist</option>
+              <option value="Gastroenterologist">Gastroenterologist</option>
+              <option value="General Physician">General Physician</option>
+              <option value="Gynecologist">Gynecologist</option>
+              <option value="Neurologist">Neurologist</option>
+              <option value="Nephrologist">Nephrologist</option>
+              <option value="Oncologist">Oncologist</option>
+              <option value="Ophthalmologist">Ophthalmologist</option>
+              <option value="Orthopedic Surgeon">Orthopedic Surgeon</option>
+              <option value="Pediatrician">Pediatrician</option>
+              <option value="Psychiatrist">Psychiatrist</option>
+              <option value="Pulmonologist">Pulmonologist</option>
+              <option value="Radiologist">Radiologist</option>
+              <option value="Urologist">Urologist</option>
+              <option value="Other">Other</option>
+            </select>
+            <i class="select-chevron icon" data-lucide="chevron-down" aria-hidden="true"></i>
+          </div>
+          <input type="text" id="specialization-other" class="form-input"
+            placeholder="Enter your specialization" aria-label="Custom specialization"
+            style="display:none; margin-top:8px;">
         </div>
         <div class="form-group" id="field-license_no">
           <label class="form-label">License Number</label>

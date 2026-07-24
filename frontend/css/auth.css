@@ -272,6 +272,30 @@ body {
 
 textarea.form-input { resize: none; line-height: 1.5; }
 
+/* Select (specialization, etc.) */
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+  color: var(--text);
+}
+select.form-input:invalid { color: var(--muted2); }
+select.form-input option { color: var(--text); }
+select.form-input option[disabled] { color: var(--muted2); }
+
+.select-wrap { position: relative; }
+.select-wrap .select-chevron {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  width: 17px; height: 17px;
+  color: var(--muted);
+  pointer-events: none;
+  transition: color .15s var(--ease);
+}
+.select-wrap .form-input:focus + .select-chevron { color: var(--accent); }
+
 /* Password */
 .input-wrap { position: relative; }
 .input-wrap .form-input { padding-right: 44px; }
