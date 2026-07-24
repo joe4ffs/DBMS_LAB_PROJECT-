@@ -81,7 +81,7 @@
         <!-- Role -->
         <div class="form-group full">
           <label class="form-label">I am a...</label>
-          <div class="role-grid">
+          <div class="role-grid" style="grid-template-columns:1fr 1fr">
             <div>
               <input type="radio" name="role" id="role-doctor" value="doctor" class="role-option" onchange="onRoleChange()">
               <label for="role-doctor" class="role-label">
@@ -92,12 +92,6 @@
               <input type="radio" name="role" id="role-patient" value="patient" class="role-option" checked onchange="onRoleChange()">
               <label for="role-patient" class="role-label">
                 <i class="role-icon icon" data-lucide="user"></i>Patient
-              </label>
-            </div>
-            <div>
-              <input type="radio" name="role" id="role-admin" value="admin" class="role-option" onchange="onRoleChange()">
-              <label for="role-admin" class="role-label">
-                <i class="role-icon icon" data-lucide="settings"></i>Admin
               </label>
             </div>
           </div>

@@ -147,11 +147,9 @@ function onRoleChange() {
   const role = document.querySelector('input[name="role"]:checked')?.value ?? 'patient';
   const patientFields = ['field-dob', 'field-gender', 'field-blood_group', 'field-address'];
   const doctorFields  = ['field-specialization', 'field-license_no', 'field-chamber'];
-  const phoneField    = document.getElementById('field-phone');
 
   patientFields.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = role === 'patient' ? '' : 'none'; });
   doctorFields.forEach(id  => { const el = document.getElementById(id); if (el) el.style.display = role === 'doctor'  ? '' : 'none'; });
-  if (phoneField) phoneField.style.display = role === 'admin' ? 'none' : '';
 
   if (role !== 'doctor') {
     const otherField = document.getElementById('specialization-other');
@@ -190,7 +188,7 @@ async function handleRegister() {
   if (password !== confirm) {
     showAlert('error', 'Passwords do not match.'); return;
   }
-  if (role !== 'admin' && !phone) {
+  if (!phone) {
     showAlert('error', 'Please enter a phone number.'); return;
   }
 
