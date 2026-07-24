@@ -79,6 +79,8 @@ const api = {
   addDoctorRole:        (body) => apiFetch('/api/account/add-doctor-role',  { method: 'POST', body: JSON.stringify(body) }),
   registerPatientRecord:(body) => apiFetch('/api/account/register-patient', { method: 'POST', body: JSON.stringify(body) }),
   registerDoctorRecord: (body) => apiFetch('/api/account/register-doctor',  { method: 'POST', body: JSON.stringify(body) }),
+  myProfile:            ()     => apiFetch('/api/account/my-profile'),
+  updateMyProfile:      (body) => apiFetch('/api/account/my-profile', { method: 'PATCH', body: JSON.stringify(body) }),
 
   // ── Appointments
   doctors:           ()           => apiFetch('/api/appointments/doctors'),

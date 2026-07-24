@@ -100,6 +100,38 @@ async def add_patient_role(body: PatientSignupIn, user_id: str = Depends(decode_
     return {"role": "patient", "linked_id": patient_id}
 
 
+@router.get("/my-profile")
+async def get_my_profile(user: CurrentUser = Depends(get_current_user)):
+    if user.role == "admin":
+        return {"full_name": user.full_name}
+    table = "patient" if user.role == "patient" else "doctor"
+    id_col = f"{table}_id"
+    result = supabase.table(table).select("*").eq(id_col, user.linked_id).single().execute()
+    return result.data or {}
+
+
+@router.patch("/my-profile")
+async def update_my_profile(body: dict, user: CurrentUser = Depends(get_current_user)):
+    if user.role == "admin":
+        full_name = (body.get("full_name") or "").strip()
+        if not full_name:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Full name is required")
+        supabase.table("user_profiles").update({"full_name": full_name}) \
+            .eq("id", user.user_id).eq("role", "admin").execute()
+        return {"full_name": full_name}
+
+    table = "patient" if user.role == "patient" else "doctor"
+    payload = (PatientSignupIn(**body) if user.role == "patient" else DoctorSignupIn(**body)).model_dump()
+    try:
+        result = supabase.table(table).update(payload).eq(f"{table}_id", user.linked_id).execute()
+    except Exception:
+        raise HTTPException(status.HTTP_409_CONFLICT, "That phone/license number is already registered to another record")
+
+    supabase.table("user_profiles").update({"full_name": payload["full_name"]}) \
+        .eq("id", user.user_id).eq("role", user.role).execute()
+    return result.data[0] if result.data else {}
+
+
 @router.post("/add-doctor-role")
 async def add_doctor_role(body: DoctorSignupIn, user_id: str = Depends(decode_bearer_token)):
     """Adds a doctor identity to a login that doesn't have one yet."""

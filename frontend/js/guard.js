@@ -208,6 +208,139 @@ async function submitAddRole(role) {
   }
 }
 
+async function openProfileModal() {
+  if (document.getElementById('profile-modal')) return;
+  toggleUserMenu();
+
+  const role = window.CURRENT_USER?.role;
+  let profile = {};
+  try {
+    profile = await api.myProfile();
+  } catch {
+    profile = {};
+  }
+
+  const v = (val) => val ?? '';
+
+  const patientFields = `
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input class="form-select" id="pf-phone" value="${v(profile.phone)}" placeholder="e.g. 01800000001">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input type="date" class="form-select" id="pf-dob" value="${v(profile.dob)}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gender</label>
+      <select class="form-select" id="pf-gender">
+        <option value="">Select...</option>
+        <option value="M" ${profile.gender === 'M' ? 'selected' : ''}>Male</option>
+        <option value="F" ${profile.gender === 'F' ? 'selected' : ''}>Female</option>
+        <option value="O" ${profile.gender === 'O' ? 'selected' : ''}>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Blood Group (optional)</label>
+      <select class="form-select" id="pf-blood_group">
+        <option value="">Unknown</option>
+        ${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(bg =>
+          `<option ${profile.blood_group === bg ? 'selected' : ''}>${bg}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Address (optional)</label>
+      <input class="form-select" id="pf-address" value="${v(profile.address)}" placeholder="e.g. Mirpur, Dhaka">
+    </div>`;
+
+  const doctorFields = `
+    <div class="form-group">
+      <label class="form-label">Phone Number (optional)</label>
+      <input class="form-select" id="pf-phone" value="${v(profile.phone)}" placeholder="e.g. 01711000001">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Specialization</label>
+      <input class="form-select" id="pf-specialization" value="${v(profile.specialization)}" placeholder="e.g. Cardiologist">
+    </div>
+    <div class="form-group">
+      <label class="form-label">License Number</label>
+      <input class="form-select" id="pf-license_no" value="${v(profile.license_no)}" placeholder="e.g. LIC-004">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chamber (optional)</label>
+      <input class="form-select" id="pf-chamber" value="${v(profile.chamber)}" placeholder="e.g. Square Hospital, Room 5">
+    </div>`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.id = 'profile-modal';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">My Profile</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+        Update the information you provided when you signed up.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-select" id="pf-full_name" value="${v(profile.full_name ?? window.CURRENT_USER?.name)}">
+      </div>
+      ${role === 'patient' ? patientFields : role === 'doctor' ? doctorFields : ''}
+      <div class="modal-error" id="profile-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="submitProfileEdit()">Save Changes</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal')?.remove();
+}
+
+async function submitProfileEdit() {
+  const err = document.getElementById('profile-error');
+  const role = window.CURRENT_USER?.role;
+  const fullName = document.getElementById('pf-full_name')?.value.trim();
+
+  try {
+    if (role === 'admin') {
+      if (!fullName) { err.textContent = 'Please enter your full name.'; return; }
+      await api.updateMyProfile({ full_name: fullName });
+    } else if (role === 'patient') {
+      const phone = document.getElementById('pf-phone')?.value.trim();
+      const dob = document.getElementById('pf-dob')?.value;
+      const gender = document.getElementById('pf-gender')?.value;
+      if (!fullName || !phone || !dob || !gender) { err.textContent = 'Please fill in name, phone, date of birth, and gender.'; return; }
+      await api.updateMyProfile({
+        full_name: fullName,
+        phone,
+        dob,
+        gender,
+        blood_group: document.getElementById('pf-blood_group')?.value || null,
+        address: document.getElementById('pf-address')?.value.trim() || null,
+      });
+    } else {
+      const specialization = document.getElementById('pf-specialization')?.value.trim();
+      const licenseNo = document.getElementById('pf-license_no')?.value.trim();
+      if (!fullName || !specialization || !licenseNo) { err.textContent = 'Please fill in name, specialization, and license number.'; return; }
+      await api.updateMyProfile({
+        full_name: fullName,
+        phone: document.getElementById('pf-phone')?.value.trim() || null,
+        specialization,
+        license_no: licenseNo,
+        chamber: document.getElementById('pf-chamber')?.value.trim() || null,
+      });
+    }
+    window.location.reload();
+  } catch (ex) {
+    err.textContent = ex.message?.includes('409')
+      ? 'That phone/license number is already registered to another record.'
+      : (ex.message || 'Failed to update profile.');
+  }
+}
+
 function renderUserWidget(name, role, initials, roles) {
   const el = document.getElementById('user-widget');
   if (!el) return;
@@ -244,6 +377,8 @@ function renderUserWidget(name, role, initials, roles) {
             <div class="user-menu-role" style="color:${roleColor}">${roleLabel}</div>
           </div>
         </div>
+        <div class="user-menu-divider"></div>
+        <a class="user-menu-item" onclick="openProfileModal()"><i class="icon" data-lucide="user-cog"></i> My Profile</a>
         <div class="user-menu-divider"></div>
         ${roleMenuItems}
         ${roleMenuItems ? '<div class="user-menu-divider"></div>' : ''}
