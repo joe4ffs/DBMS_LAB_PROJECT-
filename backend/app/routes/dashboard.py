@@ -48,3 +48,34 @@ async def get_recent_doses():
         .limit(8) \
         .execute()
     return result.data or []
+
+
+@router.get("/dose-breakdown")
+async def get_dose_breakdown():
+    doses = supabase.table("doselog").select("status").neq("status", "pending").execute()
+    data = doses.data or []
+    return {
+        "taken":  sum(1 for d in data if d["status"] == "taken"),
+        "missed": sum(1 for d in data if d["status"] == "missed"),
+        "late":   sum(1 for d in data if d["status"] == "late"),
+    }
+
+
+@router.get("/adherence-trend")
+async def get_adherence_trend():
+    result = supabase.table("doselog") \
+        .select("scheduled_at, status") \
+        .neq("status", "pending") \
+        .order("scheduled_at") \
+        .execute()
+    return result.data or []
+
+
+@router.get("/top-medicines")
+async def get_top_medicines():
+    result = supabase.table("mostprescribedmedicines") \
+        .select("*") \
+        .order("prescription_count", desc=True) \
+        .limit(5) \
+        .execute()
+    return result.data or []

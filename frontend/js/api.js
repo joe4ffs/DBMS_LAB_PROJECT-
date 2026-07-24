@@ -49,6 +49,9 @@ const api = {
   stats:       ()           => apiFetch('/api/dashboard/stats'),
   alerts:      ()           => apiFetch('/api/dashboard/alerts'),
   recentDoses: ()           => apiFetch('/api/dashboard/recent-doses'),
+  doseBreakdown:  ()        => apiFetch('/api/dashboard/dose-breakdown'),
+  adherenceTrend: ()        => apiFetch('/api/dashboard/adherence-trend'),
+  topMedicines:   ()        => apiFetch('/api/dashboard/top-medicines'),
 
   // ── Patients
   patients:        (search = '') => apiFetch(`/api/patients${search ? `?search=${encodeURIComponent(search)}` : ''}`),

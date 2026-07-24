@@ -65,6 +65,64 @@ async function loadRecentDoses() {
   }).join('');
 }
 
+// ── Dose breakdown doughnut
+async function loadDoseBreakdownChart() {
+  const d = await api.doseBreakdown();
+  const ctx = document.getElementById('chart-dose-status');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Taken', 'Missed', 'Late'],
+      datasets: [{ data: [d.taken, d.missed, d.late], backgroundColor: ['#8b7fd6', '#e1637a', '#c99435'], borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } } }
+  });
+}
+
+// ── Adherence trend line chart
+async function loadAdherenceTrendChart() {
+  const data = await api.adherenceTrend();
+  if (!data?.length) return;
+  const byDate = {};
+  data.forEach(d => {
+    const date = d.scheduled_at.split('T')[0];
+    if (!byDate[date]) byDate[date] = { taken: 0, total: 0 };
+    byDate[date].total++;
+    if (d.status === 'taken') byDate[date].taken++;
+  });
+  const labels = Object.keys(byDate).sort();
+  const values = labels.map(dt => Math.round((byDate[dt].taken / byDate[dt].total) * 100));
+  const ctx = document.getElementById('chart-adherence-trend');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Adherence %', data: values, borderColor: '#8b7fd6',
+      backgroundColor: 'rgba(139,127,214,0.12)', tension: 0.4, fill: true, pointRadius: 4 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { color: '#1f2937' } },
+        y: { min: 0, max: 100, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1f2937' } }
+      }
+    }
+  });
+}
+
+// ── Top medicines table
+async function loadTopMedicines() {
+  const data = await api.topMedicines();
+  const tbody = document.getElementById('overview-top-meds');
+  if (!tbody) return;
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">No prescription data</td></tr>'; return; }
+  tbody.innerHTML = data.map((m, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><strong>${m.generic_name}</strong>${m.brand_name ? ` (${m.brand_name})` : ''}</td>
+    <td>${m.prescription_count}</td>
+  </tr>`).join('');
+}
+
 // ── Patient list with adherence + risk
 let patientsById = {};
 
@@ -166,3 +224,6 @@ loadStats();
 loadAlerts();
 loadRecentDoses();
 loadPatients();
+loadDoseBreakdownChart();
+loadAdherenceTrendChart();
+loadTopMedicines();
