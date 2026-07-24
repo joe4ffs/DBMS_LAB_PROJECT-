@@ -152,6 +152,20 @@ function onRoleChange() {
   patientFields.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = role === 'patient' ? '' : 'none'; });
   doctorFields.forEach(id  => { const el = document.getElementById(id); if (el) el.style.display = role === 'doctor'  ? '' : 'none'; });
   if (phoneField) phoneField.style.display = role === 'admin' ? 'none' : '';
+
+  if (role !== 'doctor') {
+    const otherField = document.getElementById('specialization-other');
+    if (otherField) { otherField.style.display = 'none'; otherField.value = ''; }
+  }
+}
+
+// ── Show the free-text field when "Other" is picked in the specialization dropdown
+function onSpecializationChange() {
+  const select = document.getElementById('specialization');
+  const otherField = document.getElementById('specialization-other');
+  if (!select || !otherField) return;
+  otherField.style.display = select.value === 'Other' ? '' : 'none';
+  if (select.value !== 'Other') otherField.value = '';
 }
 
 // ── REGISTER
@@ -194,7 +208,10 @@ async function handleRegister() {
       address:     document.getElementById('address')?.value.trim() || null,
     };
   } else if (role === 'doctor') {
-    const specialization = document.getElementById('specialization')?.value.trim();
+    const specializationSelect = document.getElementById('specialization')?.value;
+    const specialization = specializationSelect === 'Other'
+      ? document.getElementById('specialization-other')?.value.trim()
+      : specializationSelect;
     const licenseNo       = document.getElementById('license_no')?.value.trim();
     if (!specialization || !licenseNo) { showAlert('error', 'Please fill in your specialization and license number.'); return; }
     doctorBody = {
